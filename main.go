@@ -11,12 +11,18 @@ import (
 
 	docs "github.com/epicmet/dekamond-task/docs"
 	"github.com/epicmet/dekamond-task/internal/otp"
+	ratelimit "github.com/epicmet/dekamond-task/internal/rate-limit"
 	"github.com/epicmet/dekamond-task/internal/users"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/swaggo/files"
 	"github.com/swaggo/gin-swagger"
 )
+
+// TODO:
+// Rate limit
+// Fix search route
+// Readme & deployment
 
 var OTP_LENGTH = 6
 var stateManager = otp.NewMemStateManager(time.Minute * 2)
@@ -228,7 +234,8 @@ func main() {
 	docs.SwaggerInfo.Title = "Dekamond Task"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	r.POST("/send-otp", sendOtp)
+	tb := ratelimit.NewTokenBucket("send-otp", 3, time.Minute*10, ratelimit.NewInMemoryStateManager())
+	r.POST("/send-otp", tb.GinMiddleware(), sendOtp)
 	r.POST("/verify-otp", verifyOtp)
 
 	r.GET("/users/:id", getUserByID)
