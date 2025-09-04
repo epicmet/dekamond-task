@@ -15,12 +15,11 @@ import (
 	"github.com/epicmet/dekamond-task/internal/users"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/swaggo/files"
-	"github.com/swaggo/gin-swagger"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // TODO:
-// Fix search route
 // Readme & deployment
 
 var OTP_LENGTH = 6
@@ -180,12 +179,12 @@ func getUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// @Summary		Search users
-// @Description	Search users by phone number or other fields
+// @Summary		Search users by phone
+// @Description	Search users by phone number prefix
 // @Tags			Users
 // @Accept			json
 // @Produce		json
-// @Param			q			query		string	true	"Search query"
+// @Param			phone		query		string	true	"Phone number prefix to search"
 // @Param			page		query		int		false	"Page number"	default(1)
 // @Param			page_size	query		int		false	"Page size"		default(10)
 // @Success		200			{object}	users.PaginatedUsers
@@ -193,9 +192,9 @@ func getUsers(c *gin.Context) {
 // @Failure		500			{object}	object{error=string}
 // @Router			/users/search [get]
 func searchUsers(c *gin.Context) {
-	query := c.Query("q")
-	if query == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "search query is required"})
+	phonePrefix := c.Query("phone")
+	if phonePrefix == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "phone parameter is required"})
 		return
 	}
 
@@ -211,7 +210,7 @@ func searchUsers(c *gin.Context) {
 		return
 	}
 
-	result, err := usersRepo.Search(query, page, pageSize)
+	result, err := usersRepo.SearchByPhone(phonePrefix, page, pageSize)
 	if err != nil {
 		fmt.Printf("error while searching users: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to search users"})

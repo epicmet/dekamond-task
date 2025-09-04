@@ -154,11 +154,11 @@ paths:
     get:
       consumes:
       - application/json
-      description: Search users by phone number or other fields
+      description: Search users by phone number prefix
       parameters:
-      - description: Search query
+      - description: Phone number prefix to search
         in: query
-        name: q
+        name: phone
         required: true
         type: string
       - default: 1
@@ -192,7 +192,7 @@ paths:
               error:
                 type: string
             type: object
-      summary: Search users
+      summary: Search users by phone
       tags:
       - Users
   /verify-otp:

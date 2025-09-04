@@ -144,7 +144,7 @@ const docTemplate = `{
         },
         "/users/search": {
             "get": {
-                "description": "Search users by phone number or other fields",
+                "description": "Search users by phone number prefix",
                 "consumes": [
                     "application/json"
                 ],
@@ -154,12 +154,12 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "Search users",
+                "summary": "Search users by phone",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Search query",
-                        "name": "q",
+                        "description": "Phone number prefix to search",
+                        "name": "phone",
                         "in": "query",
                         "required": true
                     },

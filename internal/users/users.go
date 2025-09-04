@@ -26,7 +26,7 @@ type UserRepository interface {
 	FindByID(id string) (*User, error)
 	FindByPhone(phoneNumber string) (*User, error)
 	Upsert(phoneNumber string) (*User, error)
-	Search(query string, page, pageSize int) (*PaginatedUsers, error)
+	SearchByPhone(phonePrefix string, page, pageSize int) (*PaginatedUsers, error)
 	GetAll(page, pageSize int) (*PaginatedUsers, error)
 }
 
