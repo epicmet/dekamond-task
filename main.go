@@ -9,9 +9,12 @@ import (
 	"strconv"
 	"time"
 
+	docs "github.com/epicmet/dekamond-task/docs"
 	"github.com/epicmet/dekamond-task/internal/otp"
 	"github.com/epicmet/dekamond-task/internal/users"
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/files"
+	"github.com/swaggo/gin-swagger"
 )
 
 var OTP_LENGTH = 6
@@ -24,6 +27,16 @@ var otpProvider otp.OTPProvider = otp.NewConsoleOTP(
 
 var usersRepo users.UserRepository
 
+// @Summary		Send OTP
+// @Description	Send OTP to phone number
+// @Tags			OTP
+// @Accept			json
+// @Produce		json
+// @Param			request	body		object{phone=string}	true	"Phone number"
+// @Success		200		{object}	object{message=string}
+// @Failure		400		{object}	object{error=string}
+// @Failure		500		{object}	object{error=string}
+// @Router			/send-otp [post]
 func sendOtp(c *gin.Context) {
 	var req struct {
 		Phone string `json:"phone"`
@@ -44,6 +57,15 @@ func sendOtp(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "otp has been sent"})
 }
 
+// @Summary		Verify OTP
+// @Description	Verify OTP for phone number
+// @Tags			OTP
+// @Accept			json
+// @Produce		json
+// @Param			request	body		object{phone=string,otp=string}	true	"Phone and OTP"
+// @Success		200		{object}	object{message=string}
+// @Failure		400		{object}	object{error=string}
+// @Router			/verify-otp [post]
 func verifyOtp(c *gin.Context) {
 	var req struct {
 		Phone string `json:"phone"`
@@ -75,6 +97,17 @@ func verifyOtp(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "otp verified successfully"})
 }
 
+// @Summary		Get user by ID
+// @Description	Retrieve single user details by ID
+// @Tags			Users
+// @Accept			json
+// @Produce		json
+// @Param			id	path		string	true	"User ID"
+// @Success		200	{object}	users.User
+// @Failure		400	{object}	object{error=string}
+// @Failure		404	{object}	object{error=string}
+// @Failure		500	{object}	object{error=string}
+// @Router			/users/{id} [get]
 func getUserByID(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
@@ -96,6 +129,17 @@ func getUserByID(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+// @Summary		Get all users
+// @Description	Retrieve list of users with pagination
+// @Tags			Users
+// @Accept			json
+// @Produce		json
+// @Param			page		query		int	false	"Page number"	default(1)
+// @Param			page_size	query		int	false	"Page size"		default(10)
+// @Success		200			{object}	users.PaginatedUsers
+// @Failure		400			{object}	object{error=string}
+// @Failure		500			{object}	object{error=string}
+// @Router			/users [get]
 func getUsers(c *gin.Context) {
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil || page < 1 {
@@ -119,6 +163,18 @@ func getUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+// @Summary		Search users
+// @Description	Search users by phone number or other fields
+// @Tags			Users
+// @Accept			json
+// @Produce		json
+// @Param			q			query		string	true	"Search query"
+// @Param			page		query		int		false	"Page number"	default(1)
+// @Param			page_size	query		int		false	"Page size"		default(10)
+// @Success		200			{object}	users.PaginatedUsers
+// @Failure		400			{object}	object{error=string}
+// @Failure		500			{object}	object{error=string}
+// @Router			/users/search [get]
 func searchUsers(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -156,6 +212,9 @@ func main() {
 	}
 
 	r := gin.Default()
+
+	docs.SwaggerInfo.Title = "Dekamond Task"
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	r.POST("/send-otp", sendOtp)
 	r.POST("/verify-otp", verifyOtp)

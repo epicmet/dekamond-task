@@ -1,4 +1,4 @@
-.PHONY: build run test docs clean
+.PHONY: build run docs clean
 
 APP_NAME=dekamond-task
 BUILD_DIR=bin
@@ -9,6 +9,8 @@ build:
 run:
 	go run .
 
-
 clean:
 	rm -rf $(BUILD_DIR)
+
+docs:
+	swag init
