@@ -52,13 +52,9 @@ func main() {
 			return
 		}
 
-		storedOTP, err := stateManager.Get(req.Phone)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid or expired otp"})
-			return
-		}
+		isOtpCorrect := otpProvider.Check(req.Phone, req.OTP)
 
-		if storedOTP != req.OTP {
+		if !isOtpCorrect {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid otp"})
 			return
 		}
@@ -68,47 +64,3 @@ func main() {
 
 	r.Run()
 }
-
-// package main
-//
-// import (
-// 	"fmt"
-// 	"io"
-// 	"net/http"
-// 	"os"
-// 	"time"
-//
-// 	"github.com/epicmet/dekamond-task/internal/otp"
-// 	"github.com/gin-gonic/gin"
-// )
-//
-// var OTP_LENGTH = 6
-//
-// var otpProvider otp.OTPProvider = otp.NewConsoleOTP(
-// 	&otp.MemStateManager{TTL: time.Minute * 2},
-// 	os.Stdout,
-// 	OTP_LENGTH,
-// )
-//
-// func main() {
-// 	r := gin.Default()
-// 	// TODO: Routing and http stuff. This is just a place holder
-//
-// 	r.GET("/send-otp", func(c *gin.Context) {
-// 		err := otpProvider.Send("09129377828")
-//
-// 		if err == nil {
-// 			// TODO: Some sort of DTO?
-// 			c.JSON(http.StatusOK, gin.H{
-// 				"message": "otp has been sent",
-// 			})
-// 		} else {
-// 			fmt.Printf("error while sending the otp: %v", err)
-// 			c.JSON(http.StatusInternalServerError, gin.H{
-// 				"message": "internal server error",
-// 			})
-// 		}
-// 	})
-//
-// 	r.Run()
-// }
