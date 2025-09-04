@@ -1,6 +1,9 @@
 package otp
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 type ConsoleOTP struct {
 	base   *BaseOTPProvider
@@ -24,8 +27,8 @@ func (c *ConsoleOTP) Send(pn string) error {
 		return err
 	}
 
-	// TODO: Log a better structured line. Also add \n
-	_, err = c.output.Write([]byte(otp))
+	line := fmt.Sprintf("Sending OTP :: { PhoneNumber = %s, OTP = %s }\n", pn, otp)
+	_, err = c.output.Write([]byte(line))
 
 	return err
 }
