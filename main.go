@@ -13,6 +13,7 @@ import (
 	"github.com/epicmet/dekamond-task/internal/otp"
 	"github.com/epicmet/dekamond-task/internal/users"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/swaggo/files"
 	"github.com/swaggo/gin-swagger"
 )
@@ -26,6 +27,16 @@ var otpProvider otp.OTPProvider = otp.NewConsoleOTP(
 )
 
 var usersRepo users.UserRepository
+
+var jwtSecretKey = os.Getenv("JWT_SECRET_KEY")
+
+func generateJWT(phoneNumber string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"phone_number": phoneNumber,
+		"exp":          time.Now().Add(time.Hour * 24).Unix(),
+	})
+	return token.SignedString([]byte(jwtSecretKey))
+}
 
 // @Summary		Send OTP
 // @Description	Send OTP to phone number
@@ -85,16 +96,17 @@ func verifyOtp(c *gin.Context) {
 	}
 
 	user, err := usersRepo.Upsert(req.Phone)
-
-	// TODO: JWT
-	fmt.Printf("user: %v\n", user)
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch data from db"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "otp verified successfully"})
+	token, err := generateJWT(user.PhoneNumber)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "otp verified successfully", "token": token})
 }
 
 // @Summary		Get user by ID
