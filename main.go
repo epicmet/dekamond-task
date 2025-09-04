@@ -15,12 +15,10 @@ import (
 	"github.com/epicmet/dekamond-task/internal/users"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
-
-// TODO:
-// Readme & deployment
 
 var OTP_LENGTH = 6
 var stateManager = otp.NewMemStateManager(time.Minute * 2)
@@ -32,14 +30,19 @@ var otpProvider otp.OTPProvider = otp.NewConsoleOTP(
 
 var usersRepo users.UserRepository
 
-var jwtSecretKey = os.Getenv("JWT_SECRET_KEY")
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
 
 func generateJWT(phoneNumber string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"phone_number": phoneNumber,
 		"exp":          time.Now().Add(time.Hour * 24).Unix(),
 	})
-	return token.SignedString([]byte(jwtSecretKey))
+	return token.SignedString([]byte(getEnvOrDefault("JWT_SECRET_KEY", "dummy dum key")))
 }
 
 // @Summary		Send OTP
@@ -221,8 +224,15 @@ func searchUsers(c *gin.Context) {
 }
 
 func main() {
-	var err error
-	usersRepo, err = users.NewMongoUserRepository("mongodb://localhost:27017", "dekamond-task")
+	err := godotenv.Load()
+	if err != nil {
+		log.Print("No .env file to read")
+	}
+
+	mongoURI := getEnvOrDefault("MONGO_URI", "mongodb://localhost:27017")
+	dbName := getEnvOrDefault("DB_NAME", "dekamond-task")
+
+	usersRepo, err = users.NewMongoUserRepository(mongoURI, dbName)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
