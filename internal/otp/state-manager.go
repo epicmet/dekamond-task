@@ -23,10 +23,14 @@ type MemStateManager struct {
 }
 
 func NewMemStateManager(ttl time.Duration) *MemStateManager {
-	return &MemStateManager{
+	sm := &MemStateManager{
 		TTL:   ttl,
 		store: make(map[string]otpEntry),
 	}
+
+	go sm.cleanup()
+
+	return sm
 }
 
 func (ms *MemStateManager) SetX(key string, val string) error {
@@ -49,12 +53,26 @@ func (ms *MemStateManager) Get(key string) (string, error) {
 		return "", fmt.Errorf("key not found")
 	}
 
-	// TODO: We are keeping the expired key in mem. It's technically a memory leak.
-	// Maybe instead, check on an interval for expired keys? For now, it good enough
 	if time.Now().After(entry.expiry) {
 		delete(ms.store, key)
 		return "", fmt.Errorf("key expired")
 	}
 
 	return entry.value, nil
+}
+
+func (ms *MemStateManager) cleanup() {
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		ms.mu.Lock()
+		now := time.Now()
+		for key, entry := range ms.store {
+			if !entry.expiry.IsZero() && now.After(entry.expiry) {
+				delete(ms.store, key)
+			}
+		}
+		ms.mu.Unlock()
+	}
 }

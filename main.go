@@ -20,7 +20,6 @@ import (
 )
 
 // TODO:
-// Rate limit
 // Fix search route
 // Readme & deployment
 
